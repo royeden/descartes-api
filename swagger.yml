@@ -12,6 +12,12 @@ basePath: "/api"
 
 # Paths supported by the server application
 paths:
+  # /storage/{filename}:
+  # get:
+  #   operationId: "asset.get"
+  #   parameters:
+  #     - name: filename
+  #       in: path
   /resource/all:
     get:
       operationId: "resource.get_all"
@@ -19,6 +25,50 @@ paths:
         - "Resource"
       summary: "The people data structure supported by the server application"
       description: "Read the list of people"
+      responses:
+        200:
+          description: "Successful read people list operation"
+          schema:
+            type: "array"
+            items:
+              properties:
+                resource_id:
+                  type: string
+                author:
+                  type: string
+                name:
+                  type: string
+                reason:
+                  type: string
+                size:
+                  type: number
+                uri:
+                  type: string
+                last_modified:
+                  type: string
+                created_at:
+                  type: string
+                updated_at:
+                  type: string
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+  /resource/{resource_id}:
+    get:
+      operationId: "resource.get_resource"
+      tags:
+        - "Resource"
+      summary: "The people data structure supported by the server application"
+      description: "Read the list of people"
+      parameters:
+        - name: resource_id
+          in: path
+          description: Id of the person to get
+          type: integer
+          required: True
       responses:
         200:
           description: "Successful read people list operation"
