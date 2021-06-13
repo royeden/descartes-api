@@ -1,12 +1,10 @@
-from enum import IntEnum
 from PIL import Image
 
-VALID_IMAGE_SIZES = IntEnum('VALID_IMAGE_SIZES', { i : 2**(i + 1) for i in range(10) })
-
-def image_resize(image: Image.Image, size: VALID_IMAGE_SIZES) -> Image.Image:
+def image_resize(image: Image.Image, size: int) -> Image.Image:
 	return image.copy().resize((size, size), Image.NEAREST)
 
-def image_crop(image) -> Image.Image:
+# TODO instead of saving a copy draw onto a new image to prevent broken images in the db
+def image_crop(image: Image.Image) -> Image.Image:
 	landscape = image.width > image.height
 	
 	fixed_size = 1024
@@ -22,7 +20,7 @@ def image_crop(image) -> Image.Image:
 	resized = image.copy().resize((
 		multiplier * (fixed_size if landscape else adjusted_size),
 		multiplier * (adjusted_size if landscape else fixed_size)
-	), Image.NEAREST)
+	))
 
 	left = int((resized.width - fixed_size) / 2)
 	top = int((resized.height - fixed_size) / 2)

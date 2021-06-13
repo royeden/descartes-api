@@ -111,8 +111,44 @@ paths:
         200:
           description: "Successful read people list operation"
           schema:
-            type: "file"
-  # /resource/create/:
+            type: file
+  /resource/create/:
+    post:
+      tags:
+        - "Resource"
+      description: "Add a new student"
+      operationId: "resource.create_resource"
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: file
+          in: formData
+          description: Id of the person to get
+          type: file
+          required: True
+      responses:
+        200:
+          description: "Successful read people list operation"
+          schema:
+            type: "object"
+  /resource/update/{resource_id}:
+    post:
+      tags:
+        - "Resource"
+      description: "Add a new student"
+      operationId: "resource.update_resource"
+      parameters:
+        - name: resource_id
+          in: path
+          description: Id of the person to get
+          type: integer
+          required: True
+      responses:
+        200:
+          description: "Successful read people list operation"
+          schema:
+            type: "object"
+
   #   post:
   #     operationId: "resource.create_resource"
   #     tags:
