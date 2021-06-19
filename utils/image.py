@@ -20,7 +20,7 @@ def image_crop(image: Image.Image) -> Image.Image:
 	resized = image.copy().resize((
 		multiplier * (fixed_size if landscape else adjusted_size),
 		multiplier * (adjusted_size if landscape else fixed_size)
-	))
+	), Image.NEAREST)
 
 	left = int((resized.width - fixed_size) / 2)
 	top = int((resized.height - fixed_size) / 2)
@@ -29,4 +29,5 @@ def image_crop(image: Image.Image) -> Image.Image:
 
 	# Crop the center of the image
 	crop = resized.copy().crop((left, top, right, bottom))
+
 	return crop.resize((fixed_size, fixed_size), Image.NEAREST)

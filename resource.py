@@ -1,19 +1,45 @@
-from utils.image import image_resize
+from map import fit_image
+from utils.image import image_crop, image_resize
 from PIL import Image
-import connexion, flask, os
-from config import db
+import connexion, flask, os, glob
 from datetime import datetime
+from math import ceil
+from connexion import request
 
-APP_ROOT = os.path.dirname(os.path.abspath(__file__))   # refers to application_top
-
-print
 # DB
-from models.resource import Resource, ResourceSchema
+from config import basedir, db
+from models.resource import Resource, ResourceSchema, Reason
 
+storage_path = os.path.join(basedir, "storage")
 
 def get_all():
-    result = Resource.query.order_by(Resource.name).all()
+    result = (
+        Resource.query.order_by(Resource.resource_id)
+        .filter(Resource.x != None)
+        .filter(Resource.y != None)
+        .filter(Resource.z != None)
+        .all()
+    )
     return ResourceSchema(many=True).dump(result), 200
+
+def get_limited():
+    count = len(list(glob.glob(f"{storage_path}/*")))
+    limit = round(count / 10)
+    result = (
+        Resource.query.order_by(Resource.updated_at.asc())
+        .filter(Resource.x != None)
+        .filter(Resource.y != None)
+        .filter(Resource.z != None)
+        .filter(Resource.size > 1)
+        .limit(limit)
+        .all()
+    )
+    return {
+        "resources": ResourceSchema(many=True).dump(result),
+        "choose": ceil(count / 200),
+        "limit": limit,
+        "total": count,
+    }, 200
 
 
 def get_resource(resource_id):
@@ -21,26 +47,72 @@ def get_resource(resource_id):
     return ResourceSchema().dump(result), 200
 
 
-def create_resource():
-    file = connexion.request.files['file']
-    print(file)
-    return {}, 200
+def create_resource(name, reason, lastModified):
+    file = connexion.request.files["file"]
+    filename = file.filename.split(".")
+    extension = filename.pop() # remove extension
+    filename = "".join(filename)
 
-# TODO clean this ugly flow
+    resource_path = os.path.join(storage_path, file.filename)
+
+    file.save(resource_path)
+    image = image_crop(Image.open(resource_path))
+    jpg = Image.new("RGB", image.size, (255,255,255))
+    jpg.paste(image.convert('RGB'))
+    os.unlink(resource_path)
+    save_path = os.path.join(storage_path, filename) + ".jpg"
+    jpg.save(save_path, quality=95)
+
+    [x, y, z] = fit_image(save_path)
+    resource = Resource(
+        author=name,
+        extension=extension,
+        filename=filename,
+        name=file.filename,
+        reason=[Reason(content=reason, timestamp=datetime.now())],
+        original_size=1024,
+        size=1024,
+        uri="/files/" + filename + ".jpg",
+        created_at=datetime.now(),
+        last_modified=datetime.now(),
+        updated_at=datetime.now(),
+        x=x,
+        y=y,
+        z=z,
+    )
+    db.session.add(resource)
+    db.session.commit()
+
+    return ResourceSchema().dump(resource), 200
+
 def update_resource(resource_id):
     resource = Resource.query.get_or_404(resource_id)
-    path = os.path.join(APP_ROOT, "storage/" + resource.name)
-    if (not os.path.exists(path)):
+    storage_path = os.path.join(basedir, "storage")
+    resource_path = os.path.join(storage_path, resource.filename)
+    reason = request.get_json()["reason"]
+    
+    if not os.path.exists(resource_path):
         return {}, 404
-    if (resource.size > 1):
-        file = Image.open(path)
-        resize = int(int(resource.size) / 2)
+    if not reason:
+        return {}, 412
+    if resource.size > 1:
+        resize = int(resource.size / 2)
+
+        file = Image.open(resource_path)
+        filename = resource.name + f"_{resize}." + resource.extension
+
         image = image_resize(file, resize) # Resize the image
-        image.save(path)
+        image.save(os.path.join(storage_path, filename))
+        resource.reason.append(Reason(content=reason,timestamp=datetime.now()))
+        resource.filename = filename
+        resource.uri = "/files/" + filename
         resource.size = resize
         resource.updated_at = datetime.now()
+
         db.session.merge(resource)
         db.session.commit()
+
+        os.unlink(resource_path)
         return ResourceSchema().dump(resource), 200
     else:
         return {}, 401
