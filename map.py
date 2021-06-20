@@ -10,15 +10,20 @@ from keras import Model
 import umap
 import tqdm
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
-
 LAYER=1
 SIZE=300
 MODEL_FILENAME="umap-model.model"
 BATCH_SIZE=32
+
+def calculate_position(p: int):
+	multiplier = 5 # Delimits space between elements
+	difference = (multiplier / 2) * 10
+	return int(p * multiplier - difference)
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 def images_to_grid(filenames, size=SIZE, layer=LAYER, batch_size=BATCH_SIZE, n_neighbors=30, min_dist=0.5):
 	layer_num = layer
@@ -100,11 +105,6 @@ def images_to_grid(filenames, size=SIZE, layer=LAYER, batch_size=BATCH_SIZE, n_n
 	joblib.dump(umap3d, os.path.join(basedir, umap_model))
 
 	return data3d
-
-def calculate_position(p: int):
-	multiplier = 30 # Delimits space between elements
-	difference = (multiplier / 2) * 10
-	return int(p * multiplier - difference)
 
 def fit_image(filename):
 	size = SIZE

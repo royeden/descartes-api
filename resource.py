@@ -7,19 +7,21 @@ from math import ceil
 from connexion import request
 
 # DB
-from config import basedir, db
+from config import basedir, db, RESIZE_FACTOR
 from models.resource import Resource, ResourceSchema, Reason
 
 storage_path = os.path.join(basedir, "storage")
 
-def get_all():
-    result = (
+def resource_result():
+    return (
         Resource.query.order_by(Resource.resource_id)
         .filter(Resource.x != None)
         .filter(Resource.y != None)
         .filter(Resource.z != None)
-        .all()
     )
+
+def get_all():
+    result = resource_result().all()
     return ResourceSchema(many=True).dump(result), 200
 
 def get_limited():
@@ -96,7 +98,7 @@ def update_resource(resource_id):
     if not reason:
         return {}, 412
     if resource.size > 1:
-        resize = int(resource.size / 2)
+        resize = int(resource.size / RESIZE_FACTOR)
 
         file = Image.open(resource_path)
         filename = resource.name + f"_{resize}." + resource.extension
@@ -120,3 +122,12 @@ def update_resource(resource_id):
 
 def get_file(filename):
     return flask.send_from_directory("storage", filename), 200
+
+def get_center():
+    import numpy as np
+    result = resource_result().all()
+    resources = []
+    for resource in result:
+        resources.append([resource.x, resource.y, resource.z])
+    points = np.array(resources)
+    return { "center": points.mean(axis=0).astype(int).tolist() }, 200

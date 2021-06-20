@@ -217,7 +217,16 @@ paths:
           description: "Successful read people list operation"
           schema:
             type: "object"
-
+  /resource/get-center:
+    get:
+      tags:
+        - "Resource"
+      operationId: "resource.get_center"
+      responses:
+        200:
+          description: "Successful read people list operation"
+          schema:
+            type: "object"
   #   post:
   #     operationId: "resource.create_resource"
   #     tags:

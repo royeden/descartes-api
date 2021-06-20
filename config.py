@@ -7,6 +7,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 DB_PATH = 'resources.db'
 UPLOAD_FOLDER = 'storage/'
+IMAGE_SIZE=1024
+RESIZE_FACTOR=4
 
 # Create the Connexion application instance
 connex_app = connexion.App(__name__, specification_dir=basedir)
