@@ -7,7 +7,7 @@ from math import ceil
 from connexion import request
 
 # DB
-from config import basedir, db, RESIZE_FACTOR
+from config import IMAGE_SIZE, basedir, db, RESIZE_FACTOR
 from models.resource import ResourceSchema, Resource, ResourceSchema, Reason
 
 storage_path = os.path.join(basedir, "storage")
@@ -102,18 +102,28 @@ def update_resource(resource_id):
         resize = int(resource.size / RESIZE_FACTOR)
 
         file = Image.open(resource_path)
-        filename = resource.filename.replace(f"{resource.size}.jpg", f"_{resize}.jpg")
+        # Forces repaint
+        if resource.size == IMAGE_SIZE:
+            filename = resource.filename.replace(".jpg", f"_{resize}.jpg")
+        else:
+            filename = resource.filename.replace(f"{resource.size}.jpg", f"_{resize}.jpg")
+
+        save_path = os.path.join(storage_path, filename)
 
         image = image_resize(file, resize) # Resize the image
-        image.save(os.path.join(storage_path, filename))
+        image.save(save_path)
+        
+        from shutil import copyfile
+        copyfile(resource_path, os.path.join(basedir, f"backup/{resource.filename}"))
+
         resource.reason.append(Reason(content=reason,timestamp=datetime.now()))
         resource.filename = filename
-        resource.uri = "/files/" + filename
+        resource.uri = "/files/" + save_path
         resource.size = resize
         resource.updated_at = datetime.now()
 
-        db.session.merge(resource)
-        db.session.commit()
+        # db.session.merge(resource)
+        # db.session.commit()
 
         os.unlink(resource_path)
         return ResourceSchema().dump(resource), 200
