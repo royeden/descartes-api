@@ -4,9 +4,9 @@ from models.resource import Resource
 
 from PIL import Image
 import numpy as np
-from keras.applications.vgg16 import VGG16
-from keras.applications.vgg16 import preprocess_input
-from keras import Model
+# from keras.applications.vgg16 import VGG16
+# from keras.applications.vgg16 import preprocess_input
+# from keras import Model
 import umap
 import tqdm
 
@@ -16,7 +16,7 @@ MODEL_FILENAME="umap-model.model"
 BATCH_SIZE=32
 
 def calculate_position(p: int):
-	multiplier = 5 # Delimits space between elements
+	multiplier = 10 # Delimits space between elements
 	difference = (multiplier / 2) * 10
 	return int(p * multiplier - difference)
 
@@ -27,16 +27,13 @@ def chunks(l, n):
 
 def images_to_grid(filenames, size=SIZE, layer=LAYER, batch_size=BATCH_SIZE, n_neighbors=30, min_dist=0.5):
 	layer_num = layer
-
-	global imgs
 	imgs = []
-
 	for filename in tqdm.tqdm(filenames):
 		try:
-			# abre imagen
+	# 		# abre imagen
 			img = Image.open(filename).resize((1024, 1024))
 
-			# convertir de modo por las dudas
+	# 		# convertir de modo por las dudas
 			img = img.convert(mode='RGBA')
 
 			# resize
@@ -63,41 +60,35 @@ def images_to_grid(filenames, size=SIZE, layer=LAYER, batch_size=BATCH_SIZE, n_n
 
 	imgs = np.array(imgs)
 
-	model = VGG16(weights='imagenet', include_top=False)
+	# model = VGG16(weights='imagenet', include_top=False)
 
-	if layer < 1 and layer > 5:
-		layer = 1
+	# if layer < 1 and layer > 5:
+	# 	layer = 1
 
-	layer = 'block{}_pool'.format(layer)
+	# layer = 'block{}_pool'.format(layer)
 
-	model = Model(inputs=model.input, outputs=model.get_layer(layer).output)
+	# model = Model(inputs=model.input, outputs=model.get_layer(layer).output)
 
 
-	imgsPreprocessed = []
-	for img in tqdm.tqdm(imgs):
-		imgsPreprocessed.append(preprocess_input(img))
+	# imgsPreprocessed = []
+	# for img in tqdm.tqdm(imgs):
+	# 	imgsPreprocessed.append(preprocess_input(img))
 
-	vgg_features = []
-	for img in tqdm.tqdm(chunks(imgsPreprocessed,batch_size)):
-        # extraigo descriptores de la red neuronal
-		temp = model.predict(np.array(img))
-		vgg_features.append(temp.mean(1).mean(1))
+	# vgg_features = []
+	# for img in tqdm.tqdm(chunks(imgsPreprocessed,batch_size)):
+  #       # extraigo descriptores de la red neuronal
+	# 	temp = model.predict(np.array(img))
+	# 	vgg_features.append(temp.mean(1).mean(1))
 
-	vgg_features = np.vstack(vgg_features)
+	# vgg_features = np.vstack(vgg_features)
 
-	columns = int(np.ceil(np.sqrt(len(imgs))))
-	# now = time.strftime("%Y%m%d-%H%M%S")
-	print('Number of colums', columns)
-
-	#sin ordenar
-	global data2d
-	data3d = []
-	for x in range(len(imgs)):
-		data3d.append( [ x, 0 ])
+	# columns = int(np.ceil(np.sqrt(len(imgs))))
+	# # now = time.strftime("%Y%m%d-%H%M%S")
+	# print('Number of colums', columns)
 
 	umap3d = umap.UMAP(n_components=3, n_neighbors=n_neighbors, min_dist=min_dist) # 3D y exportar como CSV o JSON
-	# data3d = umap3d.fit_transform(imgs.mean(1).mean(1)) # data 3d de las imagenes
-	data3d = umap3d.fit_transform(vgg_features) # data 3d de las imagenes
+	data3d = umap3d.fit_transform(imgs.mean(1).mean(1)) # data 3d de las imagenes
+	# data3d = umap3d.fit_transform(vgg_features) # data 3d de las imagenes
 	
 	import joblib
 	umap_model = MODEL_FILENAME
@@ -144,36 +135,38 @@ def fit_image(filename):
 
 	imgs = np.array(imgs)
 
-	model = VGG16(weights='imagenet', include_top=False)
+	# model = VGG16(weights='imagenet', include_top=False)
 
-	if layer < 1 and layer > 5:
-		layer = 1
+	# if layer < 1 and layer > 5:
+	# 	layer = 1
+	# layer = 'block{}_pool'.format(layer)
 
-	layer = 'block{}_pool'.format(layer)
+	# model = Model(inputs=model.input, outputs=model.get_layer(layer).output)
 
-	model = Model(inputs=model.input, outputs=model.get_layer(layer).output)
+	# imgsPreprocessed = []
+	# for img in tqdm.tqdm(imgs):
+	# 	imgsPreprocessed.append(preprocess_input(img))
 
-	imgsPreprocessed = []
-	for img in tqdm.tqdm(imgs):
-		imgsPreprocessed.append(preprocess_input(img))
+	# vgg_features = []
+	# for img in tqdm.tqdm(chunks(imgsPreprocessed,batch_size)):
+  #       # extraigo descriptores de la red neuronal
+	# 	temp = model.predict(np.array(img))
+	# 	vgg_features.append(temp.mean(1).mean(1))
 
-	vgg_features = []
-	for img in tqdm.tqdm(chunks(imgsPreprocessed,batch_size)):
-        # extraigo descriptores de la red neuronal
-		temp = model.predict(np.array(img))
-		vgg_features.append(temp.mean(1).mean(1))
+	# vgg_features = np.vstack(vgg_features)
 
-	vgg_features = np.vstack(vgg_features)
+	print("\n\n\n\n\n")
+	print(imgs.mean(1).mean(1))
+	print("\n\n\n\n\n")
 
 	import joblib
 	loaded_umap = joblib.load(MODEL_FILENAME)
-	position = loaded_umap.transform(vgg_features)[0]
+	position = loaded_umap.transform(imgs.mean(1).mean(1))[0]
 	return map(calculate_position, position)
 
 def build_map():
 	resources = Resource.query.order_by(Resource.resource_id).all()
 	path = os.path.join(basedir, "storage")
-	# remember to rescale all images to the same size before attempting anything
 
 	filenames = map(lambda resource: path + "/" + resource.filename, resources)
 	points = images_to_grid(filenames=filenames, n_neighbors=7, min_dist=0.77)

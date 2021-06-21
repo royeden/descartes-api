@@ -2,6 +2,7 @@ import os
 import connexion
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from flask_cors import CORS
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -31,3 +32,5 @@ db = SQLAlchemy(app)
 
 # Initialize Marshmallow
 ma = Marshmallow(app)
+
+CORS(app)

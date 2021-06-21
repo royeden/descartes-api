@@ -1,5 +1,5 @@
 from map import fit_image
-from utils.image import image_crop, image_resize
+from utils.image import new_image_crop, image_resize
 from PIL import Image
 import connexion, flask, os, glob
 from datetime import datetime
@@ -8,7 +8,7 @@ from connexion import request
 
 # DB
 from config import basedir, db, RESIZE_FACTOR
-from models.resource import Resource, ResourceSchema, Reason
+from models.resource import ResourceSchema, Resource, ResourceSchema, Reason
 
 storage_path = os.path.join(basedir, "storage")
 
@@ -53,17 +53,18 @@ def create_resource(name, reason, lastModified):
     file = connexion.request.files["file"]
     filename = file.filename.split(".")
     extension = filename.pop() # remove extension
-    filename = "".join(filename)
+    filename = "".join(filename) + ".jpg"
 
     resource_path = os.path.join(storage_path, file.filename)
 
     file.save(resource_path)
-    image = image_crop(Image.open(resource_path))
-    jpg = Image.new("RGB", image.size, (255,255,255))
-    jpg.paste(image.convert('RGB'))
+    image = new_image_crop(Image.open(resource_path))
+    save_path = os.path.join(storage_path, filename)
+    image.convert("RGB").save(save_path)
     os.unlink(resource_path)
-    save_path = os.path.join(storage_path, filename) + ".jpg"
-    jpg.save(save_path, quality=95)
+    # jpg = Image.new("RGB", image.size, (255,255,255))
+    # jpg.paste(image.convert('RGB'))
+    # jpg.save(save_path, quality=95)
 
     [x, y, z] = fit_image(save_path)
     resource = Resource(
@@ -74,7 +75,7 @@ def create_resource(name, reason, lastModified):
         reason=[Reason(content=reason, timestamp=datetime.now())],
         original_size=1024,
         size=1024,
-        uri="/files/" + filename + ".jpg",
+        uri="/files/" + filename,
         created_at=datetime.now(),
         last_modified=datetime.now(),
         updated_at=datetime.now(),
@@ -101,7 +102,7 @@ def update_resource(resource_id):
         resize = int(resource.size / RESIZE_FACTOR)
 
         file = Image.open(resource_path)
-        filename = resource.name + f"_{resize}." + resource.extension
+        filename = resource.filename.replace(f"{resource.size}.jpg", f"_{resize}.jpg")
 
         image = image_resize(file, resize) # Resize the image
         image.save(os.path.join(storage_path, filename))

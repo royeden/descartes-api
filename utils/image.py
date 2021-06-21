@@ -35,6 +35,9 @@ def image_crop(image: Image.Image) -> Image.Image:
 	return crop.resize((IMAGE_SIZE, IMAGE_SIZE), Image.NEAREST)
 
 def new_image_crop(image: Image.Image) -> Image.Image:
+	square = image.width == image.height
+	if square:
+		return image.copy().resize((IMAGE_SIZE, IMAGE_SIZE), Image.ANTIALIAS)
 	if image.size[0] < image.size[1]:
 			wpercent = (IMAGE_SIZE / float(image.size[0]))
 			hsize = int((float(image.size[1]) * float(wpercent)))

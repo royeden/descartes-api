@@ -166,7 +166,7 @@ paths:
           description: "Successful read people list operation"
           schema:
             type: file
-  /resource/create/:
+  /resource/create:
     post:
       tags:
         - "Resource"
