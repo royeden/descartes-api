@@ -122,8 +122,8 @@ def update_resource(resource_id):
         resource.size = resize
         resource.updated_at = datetime.now()
 
-        # db.session.merge(resource)
-        # db.session.commit()
+        db.session.merge(resource)
+        db.session.commit()
 
         os.unlink(resource_path)
         return ResourceSchema().dump(resource), 200
