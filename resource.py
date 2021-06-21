@@ -117,8 +117,7 @@ def update_resource(resource_id):
         copyfile(resource_path, os.path.join(basedir, f"backup/{resource.filename}"))
 
         resource.reason.append(Reason(content=reason,timestamp=datetime.now()))
-        resource.filename = filename
-        resource.uri = "/files/" + save_path
+        resource.uri = "/files/" + filename
         resource.size = resize
         resource.updated_at = datetime.now()
 
