@@ -16,7 +16,7 @@ class Resource(db.Model):
 		backref="resource",
 		cascade="all, delete, delete-orphan",
 		single_parent=True,
-		order_by="desc(Reason.timestamp)",
+		order_by="asc(Reason.timestamp)",
 	)
 	original_size = db.Column(db.Integer, nullable=False)
 	size = db.Column(db.Integer, nullable=False)
