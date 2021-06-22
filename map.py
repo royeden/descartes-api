@@ -155,9 +155,6 @@ def fit_image(filename):
 
 	# vgg_features = np.vstack(vgg_features)
 
-	print("\n\n\n\n\n")
-	print(imgs.mean(1).mean(1))
-	print("\n\n\n\n\n")
 
 	import joblib
 	loaded_umap = joblib.load(MODEL_FILENAME)

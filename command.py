@@ -1,4 +1,4 @@
-from map import build_map
+from map import build_map, fit_image
 
 from argparse import ArgumentParser
 
@@ -11,6 +11,3 @@ command = args.command
 
 if command == "build":
 	build_map()
-
-# if command == "insert":
-# 	name = input("Name")
